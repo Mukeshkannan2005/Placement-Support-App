@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Profile — PlacementHub</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="dash-layout">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo">
+        <div class="logo-icon">🎯</div>
+        <span>PlacementHub</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/student/home" class="nav-item"><span class="icon">🏠</span> Dashboard</a>
+      <a href="/student/home" class="nav-item"><span class="icon">🚀</span> Job Drives</a>
+      <a href="/student/home" class="nav-item"><span class="icon">📋</span> My Applications</a>
+      <a href="/student/profile" class="nav-item active"><span class="icon">👤</span> My Profile</a>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="nav-item" onclick="logout()"><span class="icon">🚪</span> Logout</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <div class="topbar">
+      <h2>My Profile</h2>
+      <div class="user-badge">
+        <div class="avatar" id="avatar-initials">S</div>
+        <span id="user-name">Student</span>
+      </div>
+    </div>
+
+    <div class="page-content">
+      <!-- Profile Header -->
+      <div class="profile-header">
+        <div class="profile-avatar" id="profile-avatar">S</div>
+        <div>
+          <div class="profile-name" id="profile-name">Loading...</div>
+          <div class="profile-email" id="profile-email"></div>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <span class="badge green" id="profile-dept"></span>
+            <span class="badge amber" id="profile-year"></span>
+            <span class="badge" id="profile-cgpa"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit Form -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Edit Profile</h3>
+          <button class="btn btn-primary" style="width:auto" onclick="saveProfile()">Save Changes</button>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="name" placeholder="Your full name">
+          </div>
+          <div class="form-group">
+            <label>Phone</label>
+            <input type="tel" id="phone" placeholder="+91 9876543210">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Department</label>
+            <select id="department">
+              <option value="">Select dept</option>
+              <option>Computer Science</option>
+              <option>Information Technology</option>
+              <option>Electronics & Comm.</option>
+              <option>Mechanical</option>
+              <option>Civil</option>
+              <option>Electrical</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Year</label>
+            <select id="year">
+              <option value="">Select year</option>
+              <option>1st Year</option>
+              <option>2nd Year</option>
+              <option>3rd Year</option>
+              <option>4th Year</option>
+              <option>Passed Out</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>CGPA</label>
+            <input type="number" id="cgpa" placeholder="8.5" step="0.1" min="0" max="10">
+          </div>
+          <div class="form-group">
+            <label>Resume Link</label>
+            <input type="url" id="resume_link" placeholder="https://drive.google.com/...">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Skills (comma separated)</label>
+          <input type="text" id="skills" placeholder="Python, Java, React, SQL...">
+        </div>
+      </div>
+
+      <!-- Skills Display -->
+      <div class="card">
+        <div class="card-header"><h3>Skills</h3></div>
+        <div id="skills-display" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+async function init() {
+  const sess = await fetch('/api/session/student').then(r=>r.json());
+  if (!sess.logged_in) return window.location = '/student/login';
+  document.getElementById('user-name').textContent = sess.name;
+  document.getElementById('avatar-initials').textContent = sess.name[0].toUpperCase();
+  loadProfile();
+}
+
+async function loadProfile() {
+  const res = await fetch('/api/student/profile').then(r=>r.json());
+  if (!res.success) return;
+  const d = res.data;
+  
+  document.getElementById('profile-avatar').textContent = d.name[0].toUpperCase();
+  document.getElementById('profile-name').textContent = d.name;
+  document.getElementById('profile-email').textContent = d.email;
+  document.getElementById('profile-dept').textContent = d.department || 'No Dept';
+  document.getElementById('profile-year').textContent = d.year || 'N/A';
+  document.getElementById('profile-cgpa').textContent = 'CGPA: ' + (d.cgpa || '0');
+  
+  document.getElementById('name').value = d.name || '';
+  document.getElementById('phone').value = d.phone || '';
+  document.getElementById('cgpa').value = d.cgpa || '';
+  document.getElementById('skills').value = d.skills || '';
+  document.getElementById('resume_link').value = d.resume_link || '';
+  
+  const dept = document.getElementById('department');
+  const yr = document.getElementById('year');
+  [...dept.options].forEach(o => { if (o.value === d.department) o.selected = true; });
+  [...yr.options].forEach(o => { if (o.value === d.year) o.selected = true; });
+  
+  renderSkills(d.skills);
+}
+
+function renderSkills(skillsStr) {
+  const container = document.getElementById('skills-display');
+  if (!skillsStr) { container.innerHTML = '<span style="color:var(--muted)">No skills added yet</span>'; return; }
+  const skills = skillsStr.split(',').map(s=>s.trim()).filter(Boolean);
+  container.innerHTML = skills.map(s => `<span class="badge" style="font-size:0.88rem;padding:6px 14px">${s}</span>`).join('');
+}
+
+async function saveProfile() {
+  const data = {
+    name: document.getElementById('name').value,
+    phone: document.getElementById('phone').value,
+    department: document.getElementById('department').value,
+    year: document.getElementById('year').value,
+    cgpa: parseFloat(document.getElementById('cgpa').value) || 0,
+    skills: document.getElementById('skills').value,
+    resume_link: document.getElementById('resume_link').value
+  };
+  const res = await fetch('/api/student/profile', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) }).then(r=>r.json());
+  showToast(res.message, res.success ? 'success' : 'error');
+  if (res.success) { loadProfile(); }
+}
+
+async function logout() { await fetch('/api/logout'); window.location = '/student/login'; }
+
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = (type==='success'?'✓ ':'✗ ') + msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.className='toast', 3000);
+}
+
+init();
+</script>
+</body>
+</html>

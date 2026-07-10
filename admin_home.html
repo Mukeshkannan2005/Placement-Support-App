@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — PlacementHub</title>
+<link rel="stylesheet" href="/static/css/style.css">
+<style>
+.result-btn{padding:6px 16px;border-radius:8px;font-size:0.82rem;font-weight:600;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all 0.2s}
+.btn-select{background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.4)}
+.btn-select:hover,.btn-select.active{background:#10b981;color:#fff}
+.btn-reject{background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.35)}
+.btn-reject:hover,.btn-reject.active{background:#ef4444;color:#fff}
+.btn-pend{background:rgba(245,158,11,0.12);color:#f59e0b;border:1px solid rgba(245,158,11,0.35)}
+.result-badge{padding:3px 12px;border-radius:20px;font-size:0.78rem;font-weight:600;display:inline-block}
+.rb-s{background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.35)}
+.rb-r{background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.3)}
+.rb-p{background:rgba(245,158,11,0.12);color:#f59e0b;border:1px solid rgba(245,158,11,0.3)}
+.idate{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;color:var(--text);font-size:0.82rem;outline:none;width:140px}
+.idate:focus{border-color:var(--accent)}
+.sub-tabs{display:flex;gap:4px;margin-bottom:18px;background:var(--surface2);border-radius:10px;padding:4px}
+.sub-tab{flex:1;padding:9px;text-align:center;border-radius:7px;cursor:pointer;font-size:0.88rem;font-weight:500;color:var(--muted);transition:all 0.2s;border:none;background:none;font-family:'DM Sans',sans-serif}
+.sub-tab.active{background:var(--accent);color:white}
+.cc{background:rgba(99,102,241,0.2);color:var(--accent2);border-radius:20px;padding:2px 10px;font-size:0.78rem;margin-left:6px}
+.cc.g{background:rgba(16,185,129,0.15);color:#10b981}
+.cc.r{background:rgba(239,68,68,0.12);color:#ef4444}
+</style>
+</head>
+<body>
+<div class="dash-layout">
+  <aside class="sidebar">
+    <div class="sidebar-brand"><div class="logo"><div class="logo-icon">🏢</div><span>PlacementHub</span></div></div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" onclick="showPage('dashboard',this)"><span class="icon">📊</span> Dashboard</button>
+      <button class="nav-item" onclick="showPage('post-drive',this)"><span class="icon">➕</span> Post Job Drive</button>
+      <button class="nav-item" onclick="showPage('all-drives',this)"><span class="icon">🗂️</span> All Drives</button>
+      <button class="nav-item" onclick="showPage('students',this)"><span class="icon">🎓</span> All Students</button>
+    </nav>
+    <div class="sidebar-footer"><button class="nav-item" onclick="logout()"><span class="icon">🚪</span> Logout</button></div>
+  </aside>
+  <div class="main-content">
+    <div class="topbar">
+      <h2 id="page-title">Dashboard</h2>
+      <div class="user-badge"><div class="avatar" id="avatar-initials">A</div><span id="admin-name">Admin</span></div>
+    </div>
+    <div class="page-content">
+
+      <!-- DASHBOARD -->
+      <div id="page-dashboard" class="page active">
+        <div class="stats-grid" style="grid-template-columns:repeat(5,1fr)">
+          <div class="stat-card"><div class="stat-icon green">🎓</div><div class="stat-info"><div class="value" id="stat-students">0</div><div class="label">Students</div></div></div>
+          <div class="stat-card"><div class="stat-icon purple">🚀</div><div class="stat-info"><div class="value" id="stat-drives">0</div><div class="label">Drives</div></div></div>
+          <div class="stat-card"><div class="stat-icon amber">📋</div><div class="stat-info"><div class="value" id="stat-apps">0</div><div class="label">Applications</div></div></div>
+          <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-info"><div class="value" id="stat-selected">0</div><div class="label">Selected</div></div></div>
+          <div class="stat-card"><div class="stat-icon" style="background:rgba(239,68,68,0.12)">❌</div><div class="stat-info"><div class="value" id="stat-rejected">0</div><div class="label">Rejected</div></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Recent Drives</h3><button class="btn btn-secondary" onclick="showPage('all-drives',document.querySelectorAll('.nav-item')[2])">View All</button></div>
+          <div id="recent-drives-admin"></div>
+        </div>
+      </div>
+
+      <!-- POST DRIVE -->
+      <div id="page-post-drive" class="page">
+        <div class="card" style="max-width:700px">
+          <div class="card-header"><h3>Post New Job Drive</h3></div>
+          <div class="form-row">
+            <div class="form-group"><label>Company Name *</label><input type="text" id="company_name" placeholder="Google, TCS..."></div>
+            <div class="form-group"><label>Role *</label><input type="text" id="role" placeholder="Software Engineer..."></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Package (CTC)</label><input type="text" id="package" placeholder="12 LPA"></div>
+            <div class="form-group"><label>Location</label><input type="text" id="location" placeholder="Bangalore, Remote..."></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Drive Date</label><input type="date" id="drive_date"></div>
+            <div class="form-group"><label>Last Date to Apply</label><input type="date" id="last_date"></div>
+          </div>
+          <div class="form-group"><label>Eligibility</label><input type="text" id="eligibility" placeholder="CGPA ≥ 7.0, CSE/IT only..."></div>
+          <div class="form-group"><label>Description</label><textarea id="description" rows="4" style="resize:vertical" placeholder="Describe the role..."></textarea></div>
+          <button class="btn btn-primary" style="width:auto;padding:13px 40px" onclick="postDrive()">🚀 Post Drive</button>
+        </div>
+      </div>
+
+      <!-- ALL DRIVES -->
+      <div id="page-all-drives" class="page"><div id="admin-drives-list"></div></div>
+
+      <!-- ALL STUDENTS -->
+      <div id="page-students" class="page">
+        <div class="card" style="margin-bottom:16px">
+          <input type="text" id="student-search" placeholder="🔍  Search students..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-size:0.95rem;outline:none;" oninput="filterStudents()">
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>All Students</h3><span class="badge" id="student-count">0 students</span></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Department</th><th>Year</th><th>CGPA</th><th>Skills</th><th>Joined</th></tr></thead>
+              <tbody id="students-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- APPLICANTS MODAL -->
+<div class="modal-overlay" id="applicants-modal">
+  <div class="modal" style="max-width:880px;width:96%">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <h3 id="applicants-title" style="margin:0">Applicants</h3>
+      <button class="btn btn-secondary" style="width:auto" onclick="closeApplicantsModal()">✕ Close</button>
+    </div>
+    <div class="sub-tabs">
+      <button class="sub-tab active" onclick="switchSub('all',this)">All <span class="cc" id="cc-all">0</span></button>
+      <button class="sub-tab" onclick="switchSub('selected',this)">Selected <span class="cc g" id="cc-sel">0</span></button>
+      <button class="sub-tab" onclick="switchSub('rejected',this)">Rejected <span class="cc r" id="cc-rej">0</span></button>
+      <button class="sub-tab" onclick="switchSub('pending',this)">Pending <span class="cc" id="cc-pend">0</span></button>
+    </div>
+    <div id="sub-all">
+      <div class="table-wrap"><table>
+        <thead><tr><th>Name</th><th>Dept</th><th>Year</th><th>CGPA</th><th>Interview Date</th><th>Result</th><th>Actions</th></tr></thead>
+        <tbody id="all-table"></tbody>
+      </table></div>
+    </div>
+    <div id="sub-selected" style="display:none">
+      <div class="table-wrap"><table>
+        <thead><tr><th>Name</th><th>Email</th><th>Dept</th><th>Year</th><th>CGPA</th><th>Interview Date</th></tr></thead>
+        <tbody id="sel-table"></tbody>
+      </table></div>
+    </div>
+    <div id="sub-rejected" style="display:none">
+      <div class="table-wrap"><table>
+        <thead><tr><th>Name</th><th>Email</th><th>Dept</th><th>Year</th><th>CGPA</th></tr></thead>
+        <tbody id="rej-table"></tbody>
+      </table></div>
+    </div>
+    <div id="sub-pending" style="display:none">
+      <div class="table-wrap"><table>
+        <thead><tr><th>Name</th><th>Dept</th><th>Year</th><th>CGPA</th><th>Applied On</th></tr></thead>
+        <tbody id="pend-table"></tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+let allStudents=[],currentDriveId=null;
+
+async function init(){
+  const sess=await fetch('/api/session/admin').then(r=>r.json());
+  if(!sess.logged_in) return window.location='/admin/login';
+  document.getElementById('admin-name').textContent=sess.name;
+  document.getElementById('avatar-initials').textContent=sess.name[0].toUpperCase();
+  loadStats();loadAdminDrives();loadStudents();
+}
+
+async function loadStats(){
+  const res=await fetch('/api/admin/stats').then(r=>r.json());
+  if(!res.success) return;
+  ['students','drives','apps','selected','rejected'].forEach(k=>{
+    const el=document.getElementById('stat-'+k);
+    if(el) el.textContent=res.data['total_'+k]||0;
+  });
+}
+
+async function loadAdminDrives(){
+  const res=await fetch('/api/admin/drives').then(r=>r.json());
+  if(!res.success) return;
+  const drives=res.data;
+  const recentEl=document.getElementById('recent-drives-admin');
+  recentEl.innerHTML=drives.slice(0,3).length?
+    '<div class="table-wrap"><table><thead><tr><th>Company</th><th>Role</th><th>Package</th><th>Drive Date</th><th>Applied</th><th>Selected</th><th>Rejected</th></tr></thead><tbody>'+
+    drives.slice(0,3).map(d=>`<tr><td><strong>${d.company_name}</strong></td><td>${d.role}</td><td>${d.package||'TBD'}</td><td>${d.drive_date||'TBD'}</td>
+      <td><span class="badge">${d.applicant_count}</span></td>
+      <td><span class="result-badge rb-s">${d.selected_count||0}</span></td>
+      <td><span class="result-badge rb-r">${d.rejected_count||0}</span></td></tr>`).join('')+
+    '</tbody></table></div>':'<div class="empty-state"><div class="icon">📭</div><p>No drives yet</p></div>';
+  const allEl=document.getElementById('admin-drives-list');
+  if(!drives.length){allEl.innerHTML='<div class="empty-state"><div class="icon">📭</div><p>No drives posted yet.</p></div>';return;}
+  allEl.innerHTML=drives.map(d=>`
+    <div class="drive-card" style="margin-bottom:16px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div style="flex:1">
+          <div class="drive-company">${d.company_name}</div>
+          <div class="drive-role">${d.role}</div>
+          <div class="drive-meta" style="margin-top:8px">
+            <span class="badge green">💰 ${d.package||'TBD'}</span>
+            <span class="badge amber">📅 ${d.drive_date||'TBD'}</span>
+            <span class="badge">📍 ${d.location||'Any'}</span>
+            <span class="badge">👥 ${d.applicant_count} Applied</span>
+            <span class="result-badge rb-s">✓ ${d.selected_count||0} Selected</span>
+            <span class="result-badge rb-r">✗ ${d.rejected_count||0} Rejected</span>
+          </div>
+          <p style="color:var(--muted);font-size:0.84rem;margin-top:10px;line-height:1.5">${(d.description||'').slice(0,110)}${(d.description||'').length>110?'...':''}</p>
+        </div>
+        <button class="btn btn-secondary" style="width:auto;white-space:nowrap" onclick="openModal(${d.id},'${d.company_name.replace(/'/g,"\\'")} — ${d.role.replace(/'/g,"\\'")}')">👥 Manage Applicants</button>
+      </div>
+    </div>`).join('');
+}
+
+async function loadStudents(){
+  const res=await fetch('/api/admin/students').then(r=>r.json());
+  if(!res.success) return;
+  allStudents=res.data;renderStudents(allStudents);
+}
+
+function renderStudents(students){
+  document.getElementById('student-count').textContent=students.length+' students';
+  const tbody=document.getElementById('students-table');
+  if(!students.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:40px">No students yet</td></tr>';return;}
+  tbody.innerHTML=students.map(s=>`<tr>
+    <td><div style="display:flex;align-items:center;gap:10px"><div style="width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px">${s.name[0].toUpperCase()}</div><strong>${s.name}</strong></div></td>
+    <td style="color:var(--muted)">${s.email}</td><td>${s.phone||'—'}</td>
+    <td><span class="badge">${s.department||'—'}</span></td><td>${s.year||'—'}</td>
+    <td><span class="badge ${parseFloat(s.cgpa)>=8?'green':'amber'}">${s.cgpa||'—'}</span></td>
+    <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:0.82rem">${s.skills||'—'}</td>
+    <td style="color:var(--muted);font-size:0.8rem">${new Date(s.created_at).toLocaleDateString()}</td>
+  </tr>`).join('');
+}
+function filterStudents(){
+  const q=document.getElementById('student-search').value.toLowerCase();
+  renderStudents(allStudents.filter(s=>s.name.toLowerCase().includes(q)||s.email.toLowerCase().includes(q)||(s.department||'').toLowerCase().includes(q)));
+}
+
+async function openModal(driveId,title){
+  currentDriveId=driveId;
+  document.getElementById('applicants-title').textContent='👥 '+title;
+  document.getElementById('applicants-modal').classList.add('open');
+  switchSub('all',document.querySelector('.sub-tab'));
+  await refreshApplicants(driveId);
+}
+
+async function refreshApplicants(driveId){
+  const res=await fetch(`/api/admin/drives/${driveId}/applicants`).then(r=>r.json());
+  if(!res.success) return;
+  const data=res.data;
+  const sel=data.filter(a=>a.result==='Selected');
+  const rej=data.filter(a=>a.result==='Rejected');
+  const pend=data.filter(a=>a.result==='Pending');
+  document.getElementById('cc-all').textContent=data.length;
+  document.getElementById('cc-sel').textContent=sel.length;
+  document.getElementById('cc-rej').textContent=rej.length;
+  document.getElementById('cc-pend').textContent=pend.length;
+
+  // All tab
+  document.getElementById('all-table').innerHTML=data.length
+    ?data.map(a=>`<tr id="row-${a.app_id}">
+      <td><strong>${a.name}</strong><div style="font-size:0.78rem;color:var(--muted)">${a.email}</div></td>
+      <td>${a.department||'—'}</td><td>${a.year||'—'}</td>
+      <td><span class="badge ${parseFloat(a.cgpa)>=8?'green':'amber'}">${a.cgpa||'—'}</span></td>
+      <td><input type="date" class="idate" id="id-${a.app_id}" value="${a.interview_date||''}" onchange="saveDate(${a.app_id})"></td>
+      <td><span class="result-badge ${a.result==='Selected'?'rb-s':a.result==='Rejected'?'rb-r':'rb-p'}" id="rb-${a.app_id}">${a.result}</span></td>
+      <td><div style="display:flex;gap:5px;flex-wrap:wrap">
+        <button class="result-btn btn-select ${a.result==='Selected'?'active':''}" onclick="setResult(${a.app_id},'Selected')">✓ Select</button>
+        <button class="result-btn btn-reject ${a.result==='Rejected'?'active':''}" onclick="setResult(${a.app_id},'Rejected')">✗ Reject</button>
+        <button class="result-btn btn-pend" onclick="setResult(${a.app_id},'Pending')">↺</button>
+      </div></td>
+    </tr>`).join('')
+    :'<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px">No applicants yet</td></tr>';
+
+  // Selected tab
+  document.getElementById('sel-table').innerHTML=sel.length
+    ?sel.map(a=>`<tr><td><strong>${a.name}</strong></td><td style="color:var(--muted)">${a.email}</td><td>${a.department||'—'}</td><td>${a.year||'—'}</td><td><span class="badge green">${a.cgpa||'—'}</span></td><td style="color:var(--accent2)">${a.interview_date||'—'}</td></tr>`).join('')
+    :'<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">No selected students yet</td></tr>';
+
+  // Rejected tab
+  document.getElementById('rej-table').innerHTML=rej.length
+    ?rej.map(a=>`<tr><td><strong>${a.name}</strong></td><td style="color:var(--muted)">${a.email}</td><td>${a.department||'—'}</td><td>${a.year||'—'}</td><td><span class="badge amber">${a.cgpa||'—'}</span></td></tr>`).join('')
+    :'<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">No rejected students</td></tr>';
+
+  // Pending tab
+  document.getElementById('pend-table').innerHTML=pend.length
+    ?pend.map(a=>`<tr><td><strong>${a.name}</strong></td><td>${a.department||'—'}</td><td>${a.year||'—'}</td><td><span class="badge ${parseFloat(a.cgpa)>=8?'green':'amber'}">${a.cgpa||'—'}</span></td><td style="color:var(--muted);font-size:0.82rem">${new Date(a.applied_at).toLocaleDateString()}</td></tr>`).join('')
+    :'<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">No pending applications</td></tr>';
+}
+
+async function setResult(appId,result){
+  const res=await fetch(`/api/admin/applications/${appId}/result`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({result})}).then(r=>r.json());
+  showToast(res.message,res.success?'success':'error');
+  if(res.success){await refreshApplicants(currentDriveId);loadStats();loadAdminDrives();}
+}
+
+async function saveDate(appId){
+  const date=document.getElementById(`id-${appId}`).value;
+  const res=await fetch(`/api/admin/applications/${appId}/interview`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({interview_date:date})}).then(r=>r.json());
+  showToast(res.message,res.success?'success':'error');
+  if(res.success) await refreshApplicants(currentDriveId);
+}
+
+function switchSub(name,el){
+  ['all','selected','rejected','pending'].forEach(t=>{document.getElementById('sub-'+t).style.display=t===name?'block':'none';});
+  document.querySelectorAll('.sub-tab').forEach(b=>b.classList.remove('active'));
+  if(el)el.classList.add('active');
+}
+function closeApplicantsModal(){document.getElementById('applicants-modal').classList.remove('open');}
+
+async function postDrive(){
+  const data={company_name:document.getElementById('company_name').value,role:document.getElementById('role').value,package:document.getElementById('package').value,location:document.getElementById('location').value,drive_date:document.getElementById('drive_date').value,last_date:document.getElementById('last_date').value,eligibility:document.getElementById('eligibility').value,description:document.getElementById('description').value};
+  if(!data.company_name||!data.role) return showToast('Company name and role are required','error');
+  const res=await fetch('/api/admin/drives',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(r=>r.json());
+  showToast(res.message,res.success?'success':'error');
+  if(res.success){['company_name','role','package','location','drive_date','last_date','eligibility','description'].forEach(id=>document.getElementById(id).value='');loadStats();loadAdminDrives();}
+}
+
+function showPage(name,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  if(el)el.classList.add('active');
+  const titles={'dashboard':'Dashboard','post-drive':'Post Job Drive','all-drives':'All Drives','students':'All Students'};
+  document.getElementById('page-title').textContent=titles[name]||name;
+}
+async function logout(){await fetch('/api/logout');window.location='/admin/login';}
+function showToast(msg,type='success'){const t=document.getElementById('toast');t.textContent=(type==='success'?'✓ ':'✗ ')+msg;t.className=`toast ${type} show`;setTimeout(()=>t.className='toast',3000);}
+document.getElementById('applicants-modal').addEventListener('click',function(e){if(e.target===this)closeApplicantsModal();});
+init();
+</script>
+</body>
+</html>

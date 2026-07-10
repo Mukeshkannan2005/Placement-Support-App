@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Register — PlacementHub</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="auth-container">
+  <div class="auth-left">
+    <div class="orbit orbit-1"></div>
+    <div class="orbit orbit-2"></div>
+    <div class="auth-brand">
+      <div class="logo-icon">🎯</div>
+      <h1>PlacementHub</h1>
+      <p>Begin your career journey today</p>
+    </div>
+  </div>
+  <div class="auth-right">
+    <div class="auth-form-box">
+      <h2>Create Account</h2>
+      <p class="subtitle">Student Registration</p>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="name" placeholder="Your full name">
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="tel" id="phone" placeholder="+91 9876543210">
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="email" placeholder="student@college.edu">
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label>Department</label>
+          <select id="department">
+            <option value="">Select dept</option>
+            <option>Computer Science</option>
+            <option>Information Technology</option>
+            <option>Electronics & Comm.</option>
+            <option>Mechanical</option>
+            <option>Civil</option>
+            <option>Electrical</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Year</label>
+          <select id="year">
+            <option value="">Select year</option>
+            <option>1st Year</option>
+            <option>2nd Year</option>
+            <option>3rd Year</option>
+            <option>4th Year</option>
+            <option>Passed Out</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label>CGPA</label>
+          <input type="number" id="cgpa" placeholder="8.5" step="0.1" min="0" max="10">
+        </div>
+        <div class="form-group">
+          <label>Skills (comma separated)</label>
+          <input type="text" id="skills" placeholder="Python, Java, SQL">
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="Create a strong password">
+      </div>
+      
+      <button class="btn btn-primary" onclick="register()">Create Account →</button>
+      
+      <div class="auth-link">
+        Already have an account? <a href="/student/login">Login here</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+async function register() {
+  const data = {
+    name: document.getElementById('name').value,
+    email: document.getElementById('email').value,
+    password: document.getElementById('password').value,
+    phone: document.getElementById('phone').value,
+    department: document.getElementById('department').value,
+    year: document.getElementById('year').value,
+    cgpa: parseFloat(document.getElementById('cgpa').value) || 0,
+    skills: document.getElementById('skills').value
+  };
+  if (!data.name || !data.email || !data.password) return showToast('Please fill required fields', 'error');
+  const res = await fetch('/api/student/register', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+  const json = await res.json();
+  showToast(json.message, json.success ? 'success' : 'error');
+  if (json.success) setTimeout(() => window.location = '/student/login', 1500);
+}
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = (type === 'success' ? '✓ ' : '✗ ') + msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.className = 'toast', 3000);
+}
+</script>
+</body>
+</html>

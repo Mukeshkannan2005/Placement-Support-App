@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Dashboard — PlacementHub</title>
+<link rel="stylesheet" href="/static/css/style.css">
+<style>
+.report-section{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:20px}
+.report-section-title{display:flex;align-items:center;gap:10px;margin-bottom:16px;font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:700}
+.report-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.ri-sel{background:rgba(16,185,129,0.15)}
+.ri-rej{background:rgba(239,68,68,0.12)}
+.ri-pend{background:rgba(245,158,11,0.12)}
+.ri-int{background:rgba(99,102,241,0.15)}
+.result-badge{padding:4px 14px;border-radius:20px;font-size:0.8rem;font-weight:600;display:inline-block}
+.rb-s{background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3)}
+.rb-r{background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.25)}
+.rb-p{background:rgba(245,158,11,0.12);color:#f59e0b;border:1px solid rgba(245,158,11,0.25)}
+.interview-card{background:var(--surface2);border:1px solid rgba(99,102,241,0.25);border-radius:12px;padding:16px;display:flex;align-items:center;gap:16px}
+.interview-date-box{background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;padding:10px 16px;text-align:center;min-width:70px}
+.interview-date-box .day{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:white;line-height:1}
+.interview-date-box .month{font-size:0.75rem;color:rgba(255,255,255,0.8);margin-top:2px}
+.empty-report{text-align:center;padding:28px;color:var(--muted);font-size:0.9rem}
+</style>
+</head>
+<body>
+<div class="dash-layout">
+  <aside class="sidebar">
+    <div class="sidebar-brand"><div class="logo"><div class="logo-icon">🎯</div><span>PlacementHub</span></div></div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" onclick="showPage('dashboard',this)"><span class="icon">🏠</span> Dashboard</button>
+      <button class="nav-item" onclick="showPage('drives',this)"><span class="icon">🚀</span> Job Drives</button>
+      <button class="nav-item" onclick="showPage('applications',this)"><span class="icon">📋</span> My Applications</button>
+      <button class="nav-item" onclick="showPage('report',this)"><span class="icon">📊</span> My Report</button>
+      <a href="/student/profile" class="nav-item"><span class="icon">👤</span> My Profile</a>
+    </nav>
+    <div class="sidebar-footer"><button class="nav-item" onclick="logout()"><span class="icon">🚪</span> Logout</button></div>
+  </aside>
+
+  <div class="main-content">
+    <div class="topbar">
+      <h2 id="page-title">Dashboard</h2>
+      <div class="user-badge"><div class="avatar" id="avatar-initials">S</div><span id="user-name">Student</span></div>
+    </div>
+    <div class="page-content">
+
+      <!-- DASHBOARD -->
+      <div id="page-dashboard" class="page active">
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-icon purple">🚀</div><div class="stat-info"><div class="value" id="total-drives">0</div><div class="label">Available Drives</div></div></div>
+          <div class="stat-card"><div class="stat-icon amber">📋</div><div class="stat-info"><div class="value" id="applied-count">0</div><div class="label">Applied</div></div></div>
+          <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-info"><div class="value" id="selected-count">0</div><div class="label">Selected</div></div></div>
+          <div class="stat-card"><div class="stat-icon" style="background:rgba(239,68,68,0.12)">❌</div><div class="stat-info"><div class="value" id="rejected-count">0</div><div class="label">Rejected</div></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Recent Job Drives</h3><button class="btn btn-secondary" onclick="showPage('drives',document.querySelectorAll('.nav-item')[1])">View All</button></div>
+          <div id="recent-drives-list"></div>
+        </div>
+      </div>
+
+      <!-- JOB DRIVES -->
+      <div id="page-drives" class="page">
+        <div class="card" style="margin-bottom:24px">
+          <input type="text" id="drive-search" placeholder="🔍  Search companies, roles..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-size:0.95rem;outline:none;" oninput="filterDrives()">
+        </div>
+        <div class="drives-grid" id="drives-grid"></div>
+      </div>
+
+      <!-- MY APPLICATIONS -->
+      <div id="page-applications" class="page">
+        <div class="card">
+          <div class="card-header"><h3>My Applications</h3></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Company</th><th>Role</th><th>Package</th><th>Drive Date</th><th>Interview Date</th><th>Result</th><th>Status</th></tr></thead>
+              <tbody id="apps-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- MY REPORT -->
+      <div id="page-report" class="page">
+
+        <!-- Upcoming Interviews -->
+        <div class="report-section">
+          <div class="report-section-title">
+            <div class="report-icon ri-int">📅</div>
+            <span>Upcoming Interviews</span>
+            <span class="badge" id="int-count" style="margin-left:auto">0</span>
+          </div>
+          <div id="interviews-list"><div class="empty-report">No interviews scheduled yet</div></div>
+        </div>
+
+        <!-- Selected -->
+        <div class="report-section">
+          <div class="report-section-title">
+            <div class="report-icon ri-sel">✅</div>
+            <span style="color:#10b981">Selected Companies</span>
+            <span class="badge green" id="sel-count" style="margin-left:auto">0</span>
+          </div>
+          <div id="selected-list">
+            <div class="empty-report">No selections yet — keep applying!</div>
+          </div>
+        </div>
+
+        <!-- Rejected -->
+        <div class="report-section">
+          <div class="report-section-title">
+            <div class="report-icon ri-rej">❌</div>
+            <span style="color:#ef4444">Rejected</span>
+            <span class="badge" id="rej-count" style="margin-left:auto;background:rgba(239,68,68,0.12);color:#ef4444">0</span>
+          </div>
+          <div id="rejected-list">
+            <div class="empty-report">No rejections</div>
+          </div>
+        </div>
+
+        <!-- Pending -->
+        <div class="report-section">
+          <div class="report-section-title">
+            <div class="report-icon ri-pend">⏳</div>
+            <span style="color:#f59e0b">Awaiting Result</span>
+            <span class="badge amber" id="pend-count" style="margin-left:auto">0</span>
+          </div>
+          <div id="pending-list">
+            <div class="empty-report">No pending applications</div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Drive Detail Modal -->
+<div class="modal-overlay" id="drive-modal">
+  <div class="modal">
+    <h3 id="modal-company"></h3>
+    <div id="modal-content"></div>
+    <div style="display:flex;gap:12px;margin-top:24px">
+      <button class="btn btn-primary" id="modal-apply-btn" onclick="applyFromModal()">Apply Now</button>
+      <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+let allDrives=[],currentDriveId=null;
+
+async function init(){
+  const sess=await fetch('/api/session/student').then(r=>r.json());
+  if(!sess.logged_in) return window.location='/student/login';
+  document.getElementById('user-name').textContent=sess.name;
+  document.getElementById('avatar-initials').textContent=sess.name[0].toUpperCase();
+  loadDashboard();loadDrives();loadApplications();loadReport();
+}
+
+async function loadDashboard(){
+  const res=await fetch('/api/student/drives').then(r=>r.json());
+  if(!res.success) return;
+  allDrives=res.data;
+  document.getElementById('total-drives').textContent=allDrives.length;
+  document.getElementById('applied-count').textContent=allDrives.filter(d=>d.applied).length;
+
+  // get report stats
+  const rep=await fetch('/api/student/report').then(r=>r.json());
+  if(rep.success){
+    document.getElementById('selected-count').textContent=rep.selected.length;
+    document.getElementById('rejected-count').textContent=rep.rejected.length;
+  }
+
+  const recent=allDrives.slice(0,3);
+  const list=document.getElementById('recent-drives-list');
+  list.innerHTML=recent.length?'<div class="drives-grid">'+recent.map(d=>driveCardHTML(d)).join('')+'</div>'
+    :'<div class="empty-state"><div class="icon">📭</div><p>No drives posted yet</p></div>';
+}
+
+async function loadDrives(){
+  if(!allDrives.length){const res=await fetch('/api/student/drives').then(r=>r.json());if(res.success)allDrives=res.data;}
+  renderDrives(allDrives);
+}
+
+function renderDrives(drives){
+  const grid=document.getElementById('drives-grid');
+  grid.innerHTML=drives.length?drives.map(d=>driveCardHTML(d)).join('')
+    :'<div class="empty-state" style="grid-column:1/-1"><div class="icon">🔍</div><p>No drives found</p></div>';
+}
+
+function driveCardHTML(d){
+  return `<div class="drive-card" onclick="openModal(${d.id})">
+    <div class="drive-company">${d.company_name}</div>
+    <div class="drive-role">${d.role}</div>
+    <div class="drive-meta">
+      <span class="badge green">💰 ${d.package||'TBD'}</span>
+      <span class="badge amber">📅 ${d.drive_date||'TBD'}</span>
+      <span class="badge">📍 ${d.location||'Any'}</span>
+      ${d.applied?'<span class="badge applied">✓ Applied</span>':''}
+    </div>
+    <p style="color:var(--muted);font-size:0.85rem;line-height:1.5">${(d.description||'').slice(0,100)}${d.description&&d.description.length>100?'...':''}</p>
+  </div>`;
+}
+
+function filterDrives(){
+  const q=document.getElementById('drive-search').value.toLowerCase();
+  renderDrives(allDrives.filter(d=>d.company_name.toLowerCase().includes(q)||d.role.toLowerCase().includes(q)));
+}
+
+function openModal(id){
+  const d=allDrives.find(x=>x.id===id);if(!d)return;
+  currentDriveId=id;
+  document.getElementById('modal-company').textContent=d.company_name+' — '+d.role;
+  document.getElementById('modal-content').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div><div style="color:var(--muted);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">Package</div><div style="font-weight:600">${d.package||'TBD'}</div></div>
+      <div><div style="color:var(--muted);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">Location</div><div style="font-weight:600">${d.location||'Any'}</div></div>
+      <div><div style="color:var(--muted);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">Drive Date</div><div style="font-weight:600">${d.drive_date||'TBD'}</div></div>
+      <div><div style="color:var(--muted);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">Last Date</div><div style="font-weight:600">${d.last_date||'TBD'}</div></div>
+    </div>
+    <div style="margin-bottom:12px"><div style="color:var(--muted);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Description</div><p style="line-height:1.7;color:var(--text)">${d.description||'No description provided.'}</p></div>
+    <div><div style="color:var(--muted);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Eligibility</div><p style="color:var(--text)">${d.eligibility||'Open to all.'}</p></div>`;
+  const btn=document.getElementById('modal-apply-btn');
+  if(d.applied){btn.textContent='✓ Already Applied';btn.disabled=true;btn.style.opacity='0.6';}
+  else{btn.textContent='Apply Now';btn.disabled=false;btn.style.opacity='1';}
+  document.getElementById('drive-modal').classList.add('open');
+}
+function closeModal(){document.getElementById('drive-modal').classList.remove('open');}
+
+async function applyFromModal(){
+  const res=await fetch(`/api/student/apply/${currentDriveId}`,{method:'POST'}).then(r=>r.json());
+  showToast(res.message,res.success?'success':'error');
+  if(res.success){
+    const d=allDrives.find(x=>x.id===currentDriveId);if(d)d.applied=1;
+    document.getElementById('modal-apply-btn').textContent='✓ Applied!';
+    document.getElementById('modal-apply-btn').disabled=true;
+    loadDashboard();loadApplications();loadReport();
+  }
+}
+
+async function loadApplications(){
+  const res=await fetch('/api/student/applications').then(r=>r.json());
+  const tbody=document.getElementById('apps-table');
+  if(!res.success||!res.data.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:40px">No applications yet</td></tr>';return;}
+  tbody.innerHTML=res.data.map(a=>{
+    const resCls=a.result==='Selected'?'rb-s':a.result==='Rejected'?'rb-r':'rb-p';
+    return `<tr>
+      <td><strong>${a.company_name}</strong></td>
+      <td>${a.role}</td>
+      <td>${a.package||'TBD'}</td>
+      <td>${a.drive_date||'TBD'}</td>
+      <td style="color:var(--accent2)">${a.interview_date||'—'}</td>
+      <td><span class="result-badge ${resCls}">${a.result||'Pending'}</span></td>
+      <td><span class="badge applied">${a.status}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+async function loadReport(){
+  const res=await fetch('/api/student/report').then(r=>r.json());
+  if(!res.success) return;
+
+  // Counts
+  document.getElementById('sel-count').textContent=res.selected.length;
+  document.getElementById('rej-count').textContent=res.rejected.length;
+  document.getElementById('pend-count').textContent=res.pending.length;
+  document.getElementById('int-count').textContent=res.interviews.length;
+
+  // Upcoming Interviews
+  const intList=document.getElementById('interviews-list');
+  if(!res.interviews.length){
+    intList.innerHTML='<div class="empty-report">No interviews scheduled yet</div>';
+  } else {
+    intList.innerHTML=res.interviews.map(i=>{
+      const d=new Date(i.interview_date);
+      const day=isNaN(d)?i.interview_date:d.getDate();
+      const month=isNaN(d)?'':d.toLocaleString('default',{month:'short'});
+      const resCls=i.result==='Selected'?'rb-s':i.result==='Rejected'?'rb-r':'rb-p';
+      return `<div class="interview-card" style="margin-bottom:10px">
+        <div class="interview-date-box">
+          <div class="day">${day}</div>
+          <div class="month">${month}</div>
+        </div>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:1rem">${i.company_name}</div>
+          <div style="color:var(--accent2);font-size:0.88rem">${i.role}</div>
+        </div>
+        <span class="result-badge ${resCls}">${i.result}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // Selected
+  const selList=document.getElementById('selected-list');
+  if(!res.selected.length){
+    selList.innerHTML='<div class="empty-report">No selections yet — keep applying!</div>';
+  } else {
+    selList.innerHTML='<div class="table-wrap"><table><thead><tr><th>Company</th><th>Role</th><th>Package</th><th>Location</th><th>Interview Date</th></tr></thead><tbody>'+
+    res.selected.map(s=>`<tr>
+      <td><strong style="color:#10b981">${s.company_name}</strong></td>
+      <td>${s.role}</td>
+      <td>${s.package||'TBD'}</td>
+      <td>${s.location||'—'}</td>
+      <td style="color:var(--accent2)">${s.interview_date||'—'}</td>
+    </tr>`).join('')+'</tbody></table></div>';
+  }
+
+  // Rejected
+  const rejList=document.getElementById('rejected-list');
+  if(!res.rejected.length){
+    rejList.innerHTML='<div class="empty-report">No rejections</div>';
+  } else {
+    rejList.innerHTML='<div class="table-wrap"><table><thead><tr><th>Company</th><th>Role</th><th>Package</th><th>Location</th></tr></thead><tbody>'+
+    res.rejected.map(r=>`<tr>
+      <td><strong style="color:#ef4444">${r.company_name}</strong></td>
+      <td>${r.role}</td>
+      <td>${r.package||'TBD'}</td>
+      <td>${r.location||'—'}</td>
+    </tr>`).join('')+'</tbody></table></div>';
+  }
+
+  // Pending
+  const pendList=document.getElementById('pending-list');
+  if(!res.pending.length){
+    pendList.innerHTML='<div class="empty-report">No pending applications</div>';
+  } else {
+    pendList.innerHTML='<div class="table-wrap"><table><thead><tr><th>Company</th><th>Role</th><th>Package</th><th>Interview Date</th><th>Applied On</th></tr></thead><tbody>'+
+    res.pending.map(p=>`<tr>
+      <td><strong>${p.company_name}</strong></td>
+      <td>${p.role}</td>
+      <td>${p.package||'TBD'}</td>
+      <td style="color:var(--accent2)">${p.interview_date||'Not scheduled'}</td>
+      <td style="color:var(--muted);font-size:0.82rem">${new Date(p.applied_at).toLocaleDateString()}</td>
+    </tr>`).join('')+'</tbody></table></div>';
+  }
+}
+
+function showPage(name,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  if(el)el.classList.add('active');
+  const titles={dashboard:'Dashboard',drives:'Job Drives',applications:'My Applications',report:'My Report'};
+  document.getElementById('page-title').textContent=titles[name]||name;
+  if(name==='report') loadReport();
+}
+
+async function logout(){await fetch('/api/logout');window.location='/student/login';}
+function showToast(msg,type='success'){const t=document.getElementById('toast');t.textContent=(type==='success'?'✓ ':'✗ ')+msg;t.className=`toast ${type} show`;setTimeout(()=>t.className='toast',3000);}
+document.getElementById('drive-modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+init();
+</script>
+</body>
+</html>
